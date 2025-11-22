@@ -6,28 +6,37 @@ class ParamsPanel(QWidget):
         def __init__(self):
             super().__init__()
 
-            layout = QVBoxLayout()
-            button_layout = QHBoxLayout()
-            params_layout = QHBoxLayout()
+            self.layout = QVBoxLayout()
+            self.button_layout = QHBoxLayout()
+            self.params_layout = QHBoxLayout()
 
             # Buttons
 
-            start_btn = QPushButton("Start")
-            button_layout.addWidget(start_btn)
+            self.start_btn = QPushButton("Start")
+            self.button_layout.addWidget(self.start_btn)
 
-            stop_btn = QPushButton("Stop")
-            button_layout.addWidget(stop_btn)
+            self.stop_btn = QPushButton("Stop")
+            self.button_layout.addWidget(self.stop_btn)
+
+            self.check_params = QPushButton("Check Parameters")
+            self.button_layout.addWidget(self.check_params)
 
 
             # Params
+            ## Number of atoms
+            self.boxsize = QLineEdit()
+            self.boxsize.setPlaceholderText("Enter the chosen BoxSize")
+            self.params_layout.addWidget(self.boxsize)
 
-            nb_atoms = QLineEdit()
-            nb_atoms.setPlaceholderText("Enter Temperature")
-            params_layout.addWidget(nb_atoms)
+            ## System's temperature
+            self.temperature = QLineEdit()
+            self.temperature.setPlaceholderText("Chose Temperature")
+            self.params_layout.addWidget(self.temperature)
 
 
-            layout.addLayout(button_layout)
-            layout.addLayout(params_layout)
+
+            self.layout.addLayout(self.button_layout)
+            self.layout.addLayout(self.params_layout)
 
             self.setStyleSheet("border: 1px solid #666;")
-            self.setLayout(layout)
+            self.setLayout(self.layout)

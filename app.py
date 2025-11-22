@@ -11,7 +11,8 @@ def main():
     window = MainWindow()
 
     # Display the window (Qt widgets invisible by default)
-    window.show()
+    # window.show()
+    window.showMaximized()
 
     # Start the Qt event loop
     app.exec_()
