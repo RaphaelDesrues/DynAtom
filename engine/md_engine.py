@@ -6,26 +6,20 @@ from assets.recorder import MDRecorder
 
 class Engine():
 
-    def __init__(self, temperature=200, timestep=1e-15, nsteps=500, boxsize=2):
+    def __init__(self, params):
 
         self.recorder = MDRecorder()
         self.system = System()
-        self.temperature = temperature
-        self.ts = timestep
-        self.nsteps = nsteps
-        self.boxsize = boxsize
 
-        # Example : Add n atoms
-        self.add_atoms(100, "O")
-        self.add_atoms(100, "C")
-        self.add_atoms(100, "H")
+        self.params = params
         
-
-
         # self.run_md()
 
+        n_atoms = self.params["n_atoms"]
+        self.add_atoms(n=n_atoms, type="C")
+
     def add_atoms(self, n, type):
-        positions = np.random.uniform(low=0, high=self.boxsize, size=(n, 2))
+        positions = np.random.uniform(low=0, high=self.params["boxsize"], size=(n, 2))
         for i in range(n):
             self.system.add_atom(Atom(type, positions[i]))
 
@@ -102,7 +96,8 @@ class Engine():
     def set_init_vel(self):
         for atom in self.system.atoms:
             # Simplified for now
-            atom.velocity = np.random.normal(0, np.sqrt(self.temperature / atom.mass), 2)
+            temp = self.params["temperature"]
+            atom.velocity = np.random.normal(0, np.sqrt(temp / atom.mass), 2)
 
     # ----------------------
     #  Minimization / Equilibration
@@ -181,13 +176,14 @@ class Engine():
     # ----------------------
 
     def update_vel(self):
-        dt = self.ts
+        dt = self.params["timestep"]
         for atom in self.system.atoms:
             atom.velocity += 0.5 * (atom.acc + atom.new_acc) * dt
             atom.acc = atom.new_acc
 
     def update_pos(self):
-        dt = self.ts
+        dt = self.params["timestep"]
         for atom in self.system.atoms:
             atom.position += atom.velocity * dt + 0.5 * atom.acc * dt * dt
-            atom.position = atom.position % self.boxsize
+            boxsize = self.params["boxsize"]
+            atom.position = atom.position % boxsize

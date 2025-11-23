@@ -1,6 +1,5 @@
-from csv import Error
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtWidgets import QMainWindow, QSplitter
+from PyQt5.QtWidgets import QMainWindow, QSplitter, QMessageBox
 from gui.params_panel import ParamsPanel
 from gui.graphs_panel import GraphsPanel
 from gui.atoms_panel import AtomsPanel
@@ -33,10 +32,12 @@ class MainWindow(QMainWindow):
 
         ## Handle MD
         self.params_panel.start_btn.clicked.connect(self._start_md)
-        # self.params_panel.stop_btn.clicked.connect(self._stop_md)
+        self.params_panel.stop_btn.clicked.connect(self._stop_md)
 
         # Check correct parameters for MD
-        self.params_panel.check_params.clicked.connect(lambda: self._check_params)
+        # self.params_panel.params_valid.connect(self._params_valid)
+        # self.params_panel.params_invalid.connect(self._params_invalid)
+        self.params_panel.check_btn.clicked.connect(self._check_params_wrapper)
 
         # ------------------
         #  Atom dynamic panel
@@ -67,46 +68,59 @@ class MainWindow(QMainWindow):
         #  Engine
         # ==========================
         
-        self.engine = Engine(
-            temperature=temperature,
-            boxsize=boxsize,
-        )
-
         self.graph_manager = GraphManager()
 
-    
-    def _check_params(self):
-        
-        errors = []
-        
-        boxsize = self.params_panel.boxsize.text()
-        try:
-            boxsize = int(boxsize)
-        except ValueError:
-            errors.append("Boxsize is missing or must be an integer")
 
-        temperature = self.params_panel.temperature.text()
-        try:
-            temperature = float(temperature)
-        except Error:
-            errors.append("Temperature value missing or must be a float")
-
+    def _check_params_wrapper(self):
+        values, errors = self.params_panel._check_params()
         if errors:
-            print("ERRORS; ", errors)
-
-        return boxsize, temperature
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setWindowTitle("Parameter Error")
+            msg.setText("Please correct the following errors:")
+            msg.setInformativeText("\n".join(errors))
+            msg.exec_()
+            return None, errors
+        
+        else:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle("Parameters checked")
+            msg.setText("All parameters are correct")
+            msg.exec_()
+            return values, None
 
     def _start_md(self):
+        
+        values, errors = self._check_params_wrapper() 
+        
+        if errors:
+            values = {
+                "boxsize": 10,
+                "temperature": 300,
+                "timestep": 0.001,
+                "nsteps": 200,
+                "n_atoms": 10,
+            }
+            return # TEMP
+
+        self.engine = Engine(values)
 
         # Add all plots to graphs panel
         for w in self.graph_manager.get_widgets():
             self.graphs_panel.add_graph_widget(w)
+
+        self.atoms_panel.view.add_box(values["boxsize"])
 
         # Update Graphs and atoms positions
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_all)
         self.timer.start(16)
+
+    def _stop_md(self):
+        if hasattr(self, "timer"):
+            self.timer.stop()
 
     def update_all(self):
         self.engine.run_once()
