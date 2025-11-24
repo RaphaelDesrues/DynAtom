@@ -1,0 +1,27 @@
+/* ----- PARAMETERS PANEL ----- */
+
+QGroupBox {
+    border: 2px solid gray;
+    border-radius: 5px;
+    margin-top: 1.5ex; /* leave space at the top for the title */
+    font-size: 20px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; /* position at the top center */
+    /* padding: 0 3px;
+    background-color: gray; */
+}
+
+#ParamsPanel QLineEdit {
+    font-size: 14px;
+}
+
+#ParamsPanel QLabel {
+    font-size: 14px;
+}
+
+
+/* ----- GRAPHS PANEL ----- */
+

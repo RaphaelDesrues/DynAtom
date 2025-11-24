@@ -1,4 +1,7 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QLabel
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
+    QLineEdit, QLabel, QGroupBox, QFormLayout
+)
 from PyQt5.QtCore import pyqtSignal
 
 
@@ -12,23 +15,30 @@ class ParamsPanel(QWidget):
         def __init__(self):
             super().__init__()
 
-            self.layout = QVBoxLayout()
+            # For qss style
+            self.setObjectName("ParamsPanel")
+            # Set the panel layout
+            self.layout = QVBoxLayout(self)
+
+            # ----- Control Buttons -----
+            self.button_box = QGroupBox("Controls") # QGroupBox can't hold widget -> layout
             self.button_layout = QHBoxLayout()
-            self.params_layout = QVBoxLayout()
 
-
-            # Buttons
             self.start_btn = QPushButton("Start")
-            self.button_layout.addWidget(self.start_btn)
-
             self.stop_btn = QPushButton("Stop")
-            self.button_layout.addWidget(self.stop_btn)
-
             self.check_btn = QPushButton("Check Parameters")
+
+            # Add buttons to layout
+            self.button_layout.addWidget(self.start_btn)
+            self.button_layout.addWidget(self.stop_btn)
             self.button_layout.addWidget(self.check_btn)
 
+            # Add the layout inside the box
+            self.button_box.setLayout(self.button_layout)
+            # self.button_box.setContentsMargins(5, 40, 5, 5)
 
-            # Params : iteratively add params
+            # ----- Parameters -----
+            # Define parameters
             self.params = {
                 "boxsize": ("Box size", int),
                 "temperature": ("Temperature", float),
@@ -36,26 +46,37 @@ class ParamsPanel(QWidget):
                 "nsteps": ("Number of Steps", int),
                 "n_atoms": ("Number of Atoms", int),
             }
-            self._populate_panel()
 
-            self.layout.addLayout(self.button_layout)
-            self.layout.addLayout(self.params_layout)
+            self.params_box = QGroupBox("Parameters")
+            self.params_layout = QFormLayout()
+            self.params_layout.setContentsMargins(5, 20, 5, 5)
+            # Params : iteratively add params          
+            self._populate_params_layout()
+            self.params_box.setLayout(self.params_layout)
 
-            self.setStyleSheet("border: 1px solid #666;")
-            self.setLayout(self.layout)
-
-        def _populate_panel(self):
-
+            # ----- Add Boxes to panel -----
+            self.layout.addSpacing(20)
+            self.layout.addWidget(self.button_box)
+            self.layout.addSpacing(20)
+            self.layout.addWidget(self.params_box)
+            # Flexible space at the end to up the boxes
+            self.layout.addStretch()
+            
+        def _populate_params_layout(self):
+            # Heights and Width for the widget
+            h, w = 20, 120
             for param, (label, expected_type) in self.params.items():
-                row = QHBoxLayout()
-                row.addWidget(QLabel(label))
+                label_widget = QLabel(label)
+                label_widget.setMinimumWidth(w)
+                label_widget.setMinimumHeight(h)
+                
                 widget = QLineEdit()
+                widget.setMinimumHeight(h)
+                
                 # Store the widget inside the class
                 setattr(self, param, widget)
-                row.addWidget(widget)
+                self.params_layout.addRow(label_widget, widget)
                 
-                self.params_layout.addLayout(row)
-
         def _check_params(self):
             errors = []
             values = {}

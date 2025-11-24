@@ -12,8 +12,6 @@ class AtomsPanel(QWidget):
         self.view = AtomsView()
         layout.addWidget(self.view)
 
-        self.setStyleSheet("border: 1px solid #666;")
-
         self.setLayout(layout)
 
 

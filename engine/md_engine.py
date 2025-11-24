@@ -1,14 +1,13 @@
 import numpy as np # type: ignore
 from engine.system import System
 from engine.atom import Atom
-from assets.recorder import MDRecorder
 
 
 class Engine():
 
-    def __init__(self, params):
+    def __init__(self, params, recorder):
 
-        self.recorder = MDRecorder()
+        self.recorder = recorder
         self.system = System()
 
         self.params = params

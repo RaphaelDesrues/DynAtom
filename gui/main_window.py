@@ -4,7 +4,7 @@ from gui.params_panel import ParamsPanel
 from gui.graphs_panel import GraphsPanel
 from gui.atoms_panel import AtomsPanel
 from engine.md_engine import Engine
-from assets.graph_manager import GraphManager
+from assets.recorder import MDRecorder
 from pyqtgraph.Qt import QtCore # type: ignore
 
 
@@ -12,6 +12,10 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        # Load style
+        with open("gui/style.qss", "r") as f:
+            self.setStyleSheet(f.read())
 
         self.setWindowTitle("DynAtom")
         self.setFixedSize(QSize(2400, 1800))    
@@ -59,7 +63,7 @@ class MainWindow(QMainWindow):
         main_splitter.addWidget(self.atoms_panel)
         main_splitter.addWidget(self.graphs_panel)
 
-        main_splitter.setSizes([200, 400, 200])
+        main_splitter.setSizes([100, 800, 400])
 
         self.setCentralWidget(main_splitter)
 
@@ -67,8 +71,7 @@ class MainWindow(QMainWindow):
         # ==========================
         #  Engine
         # ==========================
-        
-        self.graph_manager = GraphManager()
+        self.recorder = MDRecorder()
 
 
     def _check_params_wrapper(self):
@@ -102,13 +105,12 @@ class MainWindow(QMainWindow):
                 "nsteps": 200,
                 "n_atoms": 10,
             }
-            return # TEMP
+            # return # TEMP
 
-        self.engine = Engine(values)
+        self.engine = Engine(values, self.recorder)
 
         # Add all plots to graphs panel
-        for w in self.graph_manager.get_widgets():
-            self.graphs_panel.add_graph_widget(w)
+        self.graphs_panel.add_graph_widget()
 
         self.atoms_panel.view.add_box(values["boxsize"])
 
@@ -124,5 +126,5 @@ class MainWindow(QMainWindow):
 
     def update_all(self):
         self.engine.run_once()
-        self.graph_manager.update_all(self.engine)
+        self.graph_panels.graph_manager.update_all(self.engine)
         self.atoms_panel.view.update_positions(self.engine)
