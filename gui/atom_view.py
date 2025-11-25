@@ -23,7 +23,7 @@ class AtomsView(QWidget):
         super().__init__()
 
         self.boxsize = 10
-
+        self.box_item = None
         self.layout = QVBoxLayout()
 
         self.scatter = ScatterPlotItem()
@@ -49,6 +49,10 @@ class AtomsView(QWidget):
         # print("positions: ", positions)
 
     def add_box(self, boxsize):
+        box = self.box_item
+        if box is not None:
+            self.plot.removeItem(box)
+
         # Draw a box border
         self.boxsize = boxsize
         
@@ -63,4 +67,6 @@ class AtomsView(QWidget):
             pen=mkPen('w', width=2)
         )
         self.plot.addItem(box)
+        self.box_item = box
+
 

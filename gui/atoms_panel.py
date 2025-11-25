@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGroupBox
 from gui.atom_view import AtomsView
 
 
@@ -7,11 +7,16 @@ class AtomsPanel(QWidget):
     def __init__(self):
         super().__init__()
 
-        layout = QVBoxLayout()
+
+        self.layout = QVBoxLayout(self)
+        self.atoms_box = QGroupBox("Atoms View Dynamics")
 
         self.view = AtomsView()
-        layout.addWidget(self.view)
+        self.atoms_box.setLayout(self.view.layout)
 
-        self.setLayout(layout)
+        self.layout.addSpacing(20)
+        self.layout.addWidget(self.atoms_box)
+
+
 
 

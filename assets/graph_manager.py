@@ -24,8 +24,16 @@ class GraphManager():
         self.add_graph("LJ_potential", GraphView("LJ potential",
                                                  "Potential Energy (kcal/mol)",
                                                  "step number"))
-
+        
         self.add_graph("Total_forces", GraphView("Total forces"))
+
+        self.add_graph("acc_step", GraphView("Acceleration by step",
+                                              "Acceleration",
+                                              "Step number"))
+
+        self.add_graph("total_acc", GraphView("Total acceleration",
+                                              "Total acceleration",
+                                              "Step number"))
 
     def add_graph(self, name, graph_view):
         self.graphs[name] = graph_view

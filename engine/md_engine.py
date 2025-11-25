@@ -9,9 +9,7 @@ class Engine():
 
         self.recorder = recorder
         self.system = System()
-
         self.params = params
-        
         # self.run_md()
 
         n_atoms = self.params["n_atoms"]
@@ -64,6 +62,7 @@ class Engine():
     #             print("Step: ", step)
 
     def run_once(self):
+        self.acc_step = 0
         # 1) Update positions
         self.update_pos()
 
@@ -73,8 +72,12 @@ class Engine():
         self.calc_forces()
 
         # 3) Compute new acc
+
         for atom in self.system.atoms:
             atom.new_acc = atom.force / atom.mass
+            x = atom.new_acc[0]
+            y = atom.new_acc[1]
+            self.acc_step += np.linalg.norm(np.array(x) - np.array(y))
 
         # 4) Update velocities
         self.update_vel()

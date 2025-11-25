@@ -13,6 +13,8 @@ class MDRecorder():
         self.LJ_potential = []
         self.forces = []
         self.positions = []
+        self.acc_step = []
+        self.total_acc = []
 
     def record(self, engine):
         """Record values from the MD engine the force computing
@@ -24,6 +26,10 @@ class MDRecorder():
         self.LJ_potential.append(engine.potential_energy)
 
         # Total forces
+
+        # Total acc
+        self.acc_step.append(engine.acc_step)
+        self.total_acc.append(sum(self.acc_step))
 
 
     

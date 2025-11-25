@@ -63,7 +63,7 @@ class MainWindow(QMainWindow):
         main_splitter.addWidget(self.atoms_panel)
         main_splitter.addWidget(self.graphs_panel)
 
-        main_splitter.setSizes([100, 800, 400])
+        main_splitter.setSizes([100, 800, 500])
 
         self.setCentralWidget(main_splitter)
 
@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
         self.engine = Engine(values, self.recorder)
 
         # Add all plots to graphs panel
-        self.graphs_panel.add_graph_widget()
+        # self.graphs_panel.add_graph_widget()
 
         self.atoms_panel.view.add_box(values["boxsize"])
 
@@ -126,5 +126,5 @@ class MainWindow(QMainWindow):
 
     def update_all(self):
         self.engine.run_once()
-        self.graph_panels.graph_manager.update_all(self.engine)
+        self.graphs_panel.graph_manager.update_all(self.engine)
         self.atoms_panel.view.update_positions(self.engine)
