@@ -2,19 +2,23 @@ import pyqtgraph as pg # type: ignore
 
 
 class GraphView():
-    """GraphView is a class that manages a graphical representation of data using a plot widget.
+    """GraphView class for visualizing data in a graphical plot.
+    
+    This class initializes a plot with specified titles for the x and y axes, and provides a method to update the plot with new data.
     
     Attributes:
-        name (str): The name of the graph, which is also used as the title of the plot.
-        plot (pg.PlotWidget): The plot widget used to display the graph.
-        curve (pg.PlotDataItem): The curve representing the data in the plot.
+        name (str): The title of the graph.
+        plot (pg.PlotWidget): The plot widget used for rendering the graph.
+        curve: The curve object representing the data series in the plot.
+    
+    Args:
+        name (str): The name of the graph.
+        x_axis (str, optional): The label for the x-axis. Defaults to None.
+        y_axis (str, optional): The label for the y-axis. Defaults to None.
     
     Methods:
-        __init__(name):
-            Initializes the GraphView with a given name and sets up the plot.
-        
-        update(engine):
-            Updates the plot with new data from the provided engine's recorder.
+        update(engine, key):
+            Updates the plot with new data from the specified engine and key.
     """
     def __init__(self, name, x_axis=None, y_axis=None):
         
@@ -29,7 +33,7 @@ class GraphView():
 
         # Axis labels
         ## Axis style
-        axis_style = {"color": "black", "font-size": "16px"}
+        axis_style = {"color": "white", "font-size": "16px"}
 
         if x_axis:
             self.plot.setLabel("bottom", x_axis, **axis_style)

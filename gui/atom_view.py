@@ -4,20 +4,23 @@ from PyQt5.QtWidgets import QVBoxLayout, QWidget
 
 
 class AtomsView(QWidget):
-    """AtomsView is a QWidget that provides a visual representation of atomic positions using a scatter plot.
+    """AtomsView is a QWidget that provides a visual representation of atomic positions in a scatter plot. 
+    
+    It initializes a plot with a specified box size and allows for updating the positions of atoms as well as adding a bounding box to the plot.
     
     Attributes:
+        boxsize (int): The size of the bounding box for the plot.
+        box_item (PlotDataItem): The item representing the bounding box in the plot.
         layout (QVBoxLayout): The layout manager for the widget.
         scatter (ScatterPlotItem): The scatter plot item used to display atomic positions.
-        plot (PlotWidget): The plot widget that contains the scatter plot and additional items.
+        plot (PlotWidget): The widget that contains the scatter plot.
     
     Methods:
-        __init__():
-            Initializes the AtomsView with a given boxsize, setting up the layout, scatter plot, and plot widget.
-        
-        update_positions():
-            Updates the positions of the atoms in the scatter plot based on the data from the engine.
-            that provides the box size and atomic positions for visualization.
+        update_positions(engine):
+            Updates the positions of the atoms in the scatter plot based on the latest data from the provided engine.
+    
+        add_box(boxsize):
+            Adds or updates a bounding box in the plot with the specified size.
     """
     def __init__(self):
         super().__init__()
@@ -44,9 +47,8 @@ class AtomsView(QWidget):
         self.setLayout(self.layout)
 
     def update_positions(self, engine):
-        positions = np.array(engine.recorder.positions)
+        positions = engine.recorder.positions[-1]
         self.scatter.setData(pos=positions)
-        # print("positions: ", positions)
 
     def add_box(self, boxsize):
         box = self.box_item

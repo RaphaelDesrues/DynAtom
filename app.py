@@ -1,8 +1,17 @@
+import logging
 from PyQt5.QtWidgets import QApplication
 from gui.main_window import MainWindow
 
 
 def main():
+
+    # Activate loggings
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
     # Instance of Qt application (handle keyboard, mouse, rendering, events...)
     # Qt app cannot exist without it
     app = QApplication([])

@@ -5,7 +5,61 @@ import logging
 
 
 class Engine():
-
+    """Engine class for simulating a physical system of atoms.
+    
+    This class manages the simulation of a system of atoms, including their initialization, force calculations, and updates to their positions and velocities over time. It also provides methods for energy calculations and system equilibration.
+    
+    Attributes:
+        system (System): An instance of the System class that holds the state of the atom system.
+        params (dict): A dictionary containing simulation parameters such as the number of atoms and box size.
+        recorder (Recorder): An instance of the Recorder class used to log simulation data.
+    
+    Methods:
+        __init__(params, recorder):
+            Initializes the Engine with given parameters and a recorder.
+    
+        add_atoms(n, type):
+            Adds a specified number of atoms of a given type to the system.
+    
+        run_once(dt):
+            Executes a single time step of the simulation.
+    
+        set_init_pos(n):
+            Sets the initial positions of the atoms randomly within the defined box size.
+    
+        minimize_step(dt, conv_crit):
+            Performs a minimization step to reduce forces acting on the atoms.
+    
+        equilibrate_step(step, dt, T_target, tau):
+            Equilibrates the system by adjusting velocities based on the target temperature.
+    
+        calc_kinetic_ene():
+            Computes and returns the total kinetic energy of the system.
+    
+        calc_LJ():
+            Calculates the Lennard-Jones forces and potential between all atoms.
+    
+        calc_forces():
+            Updates the forces acting on the atoms based on the Lennard-Jones potential.
+    
+        calc_total_ene():
+            Calculates the total energy of the system, combining kinetic and potential energies.
+    
+        calc_acc():
+            Updates the accelerations of the atoms based on the current forces.
+    
+        compute_temperature():
+            Computes the temperature of the system based on the kinetic energy.
+    
+        update_acc():
+            Updates the accelerations of the atoms.
+    
+        update_vel(new_acc, dt):
+            Updates the velocities of the atoms based on the new accelerations.
+    
+        update_pos(dt):
+            Updates the positions of the atoms based on their velocities and accelerations.
+    """
     def __init__(self, params, recorder):
         self.system = System()
         self.params = params
@@ -19,7 +73,7 @@ class Engine():
         for i in range(n):
             self.system.add_atom(Atom(type, positions[i]))
 
-    def run_once(self):
+    def run_once(self, dt):
 
         # 1) Compute forces at t
         self.calc_forces()
@@ -28,14 +82,14 @@ class Engine():
         self.update_acc()
 
         # 3) Update positions
-        self.update_pos()
+        self.update_pos(dt)
 
         # 4) Compute forces at t+dt
         self.calc_forces()
         new_acc = self.system.forces / self.system.masses[:,None]
 
         # 3) Update velocities
-        self.update_vel(new_acc)
+        self.update_vel(new_acc, dt)
 
         # 5) Update accelerations
         self.system.accelerations = new_acc
@@ -54,90 +108,79 @@ class Engine():
                                  size=(n, 2)
                                 )
 
-    def set_init_vel(self):
-        temp = self.params["temperature"]
-        # Simplified for now
-        self.system.velocities = np.random.normal(
-            0, np.sqrt(temp / self.system.masses)[:,None],
-            (len(self.system.masses),2)
-        )
-
+    # def set_init_vel(self):
+    #     temp = self.params["temperature"]
+    #     # Simplified for now
+    #     self.system.velocities = np.random.normal(
+    #         0, np.sqrt(temp / self.system.masses)[:,None],
+    #         (len(self.system.masses),2)
+    #     )
 
     # ----------------------
     #  Minimization / Equilibration
     # ----------------------
 
-    def minimize(self, n_steps=100000, int_step=1e-6, conv_crit=1e-3):
-        logging.info("Computing Minimisation...")
-        for i in range(n_steps):
-            if i % 10000 == 0:
-                logging.info(f"Minimisation step n° {i}")
-            # Calc atom forces
-            self.calc_forces()
-            F = self.system.forces # (N,2)
-
-            # Force vector norm for each atom
-            norm = np.linalg.norm(F, axis=1, keepdims=True) # (N,1)
-
-            # Avoid division by 0
-            norm[norm == 0] = 1
-
-            # Compute a normalised (norm = 1) vector
-            # Avoid movement scales difference between atoms
-            F_normalised = F / norm
-
-            # Update positions
-            self.system.positions += int_step*F_normalised
-
-            # Ensure periodicity
-            self.system.positions %= self.params["boxsize"]
-
-            # if hasattr(self, "render_step"):
-                # logging.warning("Engine has render_step")
-                # self.render_step()
-            self.recorder.record(self)
-            # Stop if converged upon criterion
-            if np.max(norm) < conv_crit:
-                logging.info("Minimisation converged!")
-                break
-        logging.info("Minimisation has not converged")
-
-    def equilibrate(self, n_steps=100000, tau=1e-1):
-        logging.info("Computing Equilibration...")
-        dt = self.params["timestep"]
-        T_target = self.params["temperature"]
-
+    def minimize_step(self, dt, conv_crit):
+        # Calc atom forces
         self.calc_forces()
-        self.update_acc()
+        F = self.system.forces # (N,2)
 
-        for i in range(n_steps):
-            if i % 10000 == 0:
-                logging.info(f"Equilibration step n° {i}")
-            # 1) Update positions
-            self.update_pos()
+        # Force vector norm for each atom
+        norm = np.linalg.norm(F, axis=1, keepdims=True) # (N,1)
 
-            # 2) Compute forces at new positions
+        # Avoid division by 0
+        norm[norm == 0] = 1
+
+        # Compute a normalised (norm = 1) vector
+        # Avoid movement scales difference between atoms
+        F_normalised = F / norm
+
+        # Update positions
+        self.system.positions += dt*F_normalised
+
+        # Ensure periodicity
+        self.system.positions %= self.params["boxsize"]
+
+        # Record the atoms positions for visualisation
+        self.recorder.record(self)
+
+        # Stop if converged upon criterion
+        if np.max(norm) < conv_crit:
+            logging.info("Minimisation converged!")
+            return True
+
+    def equilibrate_step(self, step, dt, T_target, tau):
+        if step == 1:
             self.calc_forces()
-            new_acc = self.system.forces / self.system.masses[:,None]
+            self.update_acc()
 
-            # 3) Update velocities
-            self.update_vel(new_acc)
+        # 1) Update positions
+        self.update_pos(dt)
 
-            # 4) Replace accelerations
-            self.system.accelerations = new_acc
+        # 2) Compute forces at new positions
+        self.calc_forces()
+        new_acc = self.system.forces / self.system.masses[:,None]
 
-            # ---- THERMOSTAT BERENDSEN ----
-            T = self.compute_temperature()
+        # 3) Update velocities
+        self.update_vel(new_acc, dt)
 
-            # Avoid division by zero if T = 0
-            if T == 0:
-                continue
+        # 4) Replace accelerations
+        self.system.accelerations = new_acc
 
-            lambda_T = np.sqrt(1 + dt/tau * (T_target/T - 1))
+        # ---- THERMOSTAT BERENDSEN ----
+        T = self.compute_temperature()
 
-            # Scale velocities
-            self.system.velocities *= lambda_T
-        logging.info("Equilibration finished")
+        # Avoid division by zero if T = 0
+        if T == 0:
+            return
+
+        lambda_T = np.sqrt(1 + dt/tau * (T_target/T - 1))
+
+        # Scale velocities
+        self.system.velocities *= lambda_T
+
+        # Record the atoms positions for visualisation
+        self.recorder.record(self)
 
     # ----------------------
     #  Calculs
@@ -225,63 +268,15 @@ class Engine():
         self.system.accelerations = self.system.forces / \
         self.system.masses[:,None]
 
-    def update_vel(self, new_acc):
-        dt = self.params["timestep"]
+    def update_vel(self, new_acc, dt):
         self.system.velocities += 0.5 * (
             self.system.accelerations + new_acc
         ) * dt
 
-    def update_pos(self):
-        dt = self.params["timestep"]
+    def update_pos(self, dt):
         self.system.positions += (
             self.system.velocities * dt + \
             0.5 * self.system.accelerations * dt * dt
         )
 
         self.system.positions %= self.params["boxsize"]
-
-
-
-
-
-
-
-    # def run_md(self, mini=False, eq=False):
-
-    #     # Initial conditions
-    #     self.set_init_pos()
-    #     self.set_init_vel()
-
-    #     # Initial forces (needed for Verlet step 1)
-    #     self.calc_forces()
-
-    #     # Initial accelerations
-    #     self.calc_acc()
-
-    #     # Minimisation / Equilibration if needed
-    #     if mini:
-    #         self.minimize()
-    #     if eq:
-    #         self.eq()
-
-    #     # MD loop
-    #     for step in range(1, self.nsteps + 1):
-
-    #         # 1) Update positions using current velocity & acceleration
-    #         self.update_pos()
-
-    #         # 2) Recompute forces at new positions (gives F(t+dt))
-    #         self.calc_forces()
-
-    #         self.recorder.record(self)
-
-    #         # 3) new accelerations
-    #         for atom in self.system.atoms:
-    #             atom.new_acc = atom.force / atom.mass
-
-    #         # 4) Update velocities using a(t) and a(t+dt)
-    #         self.update_vel()
-
-    #         # (Optional) energy print/debug
-    #         if step % 100 == 0:
-    #             print("Step: ", step)
